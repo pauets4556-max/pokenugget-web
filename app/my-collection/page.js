@@ -2,40 +2,164 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "../../lib/supabaseClient";
 import TopBar from "../../components/TopBar";
 import BottomNav from "../../components/BottomNav";
 
+const LANGS = [
+  { code: "es", flag: "🇪🇸" },
+  { code: "en", flag: "🇬🇧" },
+  { code: "ja", flag: "🇯🇵" },
+  { code: "ko", flag: "🇰🇷" },
+  { code: "zh", flag: "🇨🇳" },
+];
+
 export default function MyCollectionPage() {
   const router = useRouter();
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [lang, setLang] = useState("es");
+  const [collections, setCollections] = useState([]);
+  const [items, setItems] = useState([]);
+  const [cards, setCards] = useState([]);
+  const [quantities, setQuantities] = useState({});
 
   useEffect(() => {
+    let active = true;
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
         router.replace("/login");
         return;
       }
-      const { data: p } = await supabase.from("profiles").select("*").eq("id", data.session.user.id).single();
-      setProfile(p);
-      setLoading(false);
+      const uid = sessionData.session.user.id;
+
+      const { data: profileData } = await supabase.from("profiles").select("*").eq("id", uid).single();
+      const { data: cols } = await supabase.from("collections").select("*").order("created_at");
+      const { data: collItems } = await supabase
+        .from("collection_items")
+        .select("collection_id, set_id, sets(id, lang, name)");
+      const { data: allCards } = await supabase.from("cards").select("id, set_id");
+      const { data: userCards } = await supabase.from("user_cards").select("card_id, quantity").eq("user_id", uid);
+
+      const qtyMap = {};
+      (userCards || []).forEach((uc) => {
+        qtyMap[uc.card_id] = uc.quantity;
+      });
+
+      if (active) {
+        setProfile(profileData);
+        setCollections(cols || []);
+        setItems(collItems || []);
+        setCards(allCards || []);
+        setQuantities(qtyMap);
+        setLoading(false);
+      }
     })();
+    return () => {
+      active = false;
+    };
   }, [router]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+        <span style={{ color: "#7D8A96", fontSize: 14 }}>Cargando...</span>
+      </div>
+    );
+  }
+
+  const computeStats = (setIds) => {
+    const setIdSet = new Set(setIds);
+    const relevantCards = cards.filter((c) => setIdSet.has(c.set_id));
+    let ownedVariety = 0;
+    let duplicates = 0;
+    relevantCards.forEach((c) => {
+      const q = quantities[c.id] || 0;
+      if (q > 0) ownedVariety += 1;
+      if (q > 1) duplicates += q - 1;
+    });
+    return { total: relevantCards.length, ownedVariety, duplicates };
+  };
+
+  const visibleCollections = collections
+    .map((c) => {
+      const itsSetIds = items
+        .filter((i) => i.collection_id === c.id && i.sets?.lang === lang)
+        .map((i) => i.set_id);
+      const stats = computeStats(itsSetIds);
+      return { ...c, setCount: itsSetIds.length, ...stats };
+    })
+    .filter((c) => c.setCount > 0);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <TopBar profile={profile} title="Mi colección" />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-        <p style={{ color: "#7D8A96", fontSize: 13, textAlign: "center", lineHeight: 1.6 }}>
-          Esta pantalla (progreso por colección) la montamos en la siguiente etapa.
-          <br />
-          Por ahora puedes marcar tus cartas desde "Colecciones".
-        </p>
+
+      <div style={{ display: "flex", gap: 4, padding: "10px 16px 0" }}>
+        {LANGS.map((l) => (
+          <button
+            key={l.code}
+            onClick={() => setLang(l.code)}
+            style={{
+              background: "transparent",
+              border: lang === l.code ? "1px solid #4A8FB8" : "1px solid transparent",
+              borderRadius: 6,
+              width: 30,
+              height: 30,
+              fontSize: 15,
+              cursor: "pointer",
+              opacity: lang === l.code ? 1 : 0.5,
+            }}
+          >
+            {l.flag}
+          </button>
+        ))}
       </div>
+
+      <div style={{ flex: 1, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+        {visibleCollections.length === 0 ? (
+          <div style={{ textAlign: "center", color: "#7D8A96", fontSize: 13, marginTop: 30 }}>
+            No hay colecciones con sets en este idioma todavía.
+          </div>
+        ) : (
+          visibleCollections.map((c) => {
+            const pct = c.total ? Math.round((c.ownedVariety / c.total) * 100) : 0;
+            return (
+              <Link
+                key={c.id}
+                href={`/my-collection/${c.id}?lang=${lang}`}
+                style={{
+                  display: "block",
+                  background: "#141922",
+                  border: "1px solid #2B3440",
+                  borderRadius: 14,
+                  padding: "14px 16px",
+                  textDecoration: "none",
+                }}
+              >
+                <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 14.5 }}>{c.name}</div>
+                <div style={{ fontSize: 11, color: "#7D8A96", marginTop: 2 }}>
+                  {c.setCount} set{c.setCount !== 1 ? "s" : ""}
+                </div>
+                <div style={{ marginTop: 8, height: 5, borderRadius: 4, background: "#2B3440", overflow: "hidden" }}>
+                  <div style={{ width: `${pct}%`, height: "100%", background: "#4A8FB8" }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                  <span style={{ fontSize: 11.5, color: "#4A8FB8", fontWeight: 700 }}>
+                    {c.ownedVariety}/{c.total} ({pct}%)
+                  </span>
+                  {c.duplicates > 0 && (
+                    <span style={{ fontSize: 11, color: "#4F9B72", fontWeight: 700 }}>+{c.duplicates} repetidas</span>
+                  )}
+                </div>
+              </Link>
+            );
+          })
+        )}
+      </div>
+
       <BottomNav />
     </div>
   );
