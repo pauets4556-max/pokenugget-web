@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = [
-  { href: "/collections", label: "Colecciones" },
-  { href: "/my-collection", label: "Mi colección" },
-];
-
-export default function BottomNav() {
+export default function BottomNav({ isAdmin }) {
   const pathname = usePathname();
+
+  const tabs = [
+    { href: "/collections", label: "Colecciones" },
+    { href: "/my-collection", label: "Mi colección" },
+    ...(isAdmin ? [{ href: "/admin", label: "Config" }] : []),
+  ];
 
   return (
     <div
@@ -21,7 +22,7 @@ export default function BottomNav() {
         bottom: 0,
       }}
     >
-      {TABS.map((t) => {
+      {tabs.map((t) => {
         const active = pathname.startsWith(t.href);
         return (
           <Link
