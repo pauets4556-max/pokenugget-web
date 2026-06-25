@@ -9,6 +9,7 @@ export default function BottomNav({ isAdmin }) {
   const tabs = [
     { href: "/collections", label: "Colecciones" },
     { href: "/my-collection", label: "Mi colección" },
+    { href: "/trade", label: "Trade" },
     ...(isAdmin ? [{ href: "/admin", label: "Config" }] : []),
   ];
 
