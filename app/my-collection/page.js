@@ -160,7 +160,7 @@ export default function MyCollectionPage() {
         )}
       </div>
 
-      <BottomNav />
+      <BottomNav isAdmin={profile?.role === "admin"} />
     </div>
   );
 }
