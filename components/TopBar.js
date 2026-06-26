@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import NotificationBell from "./NotificationBell";
 
+const COLS = "44px 1fr 44px";
+
 export default function TopBar({ profile, title, onBack }) {
   const router = useRouter();
 
@@ -24,26 +26,26 @@ export default function TopBar({ profile, title, onBack }) {
         zIndex: 10,
       }}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "60px 1fr 60px", alignItems: "center", padding: "10px 16px 6px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: COLS, alignItems: "center", padding: "10px 16px 6px" }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
           {profile?.id && <NotificationBell userId={profile.id} />}
         </div>
         <div style={{ display: "flex", justifyContent: "center" }}>
           <img src="/logo.png" alt="Poké Nugget TCG" style={{ height: 48, objectFit: "contain" }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
           {profile && (
             <button
               onClick={handleLogout}
-              style={{ background: "none", border: "1px solid #2B3440", color: "#7D8A96", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}
+              style={{ background: "none", border: "1px solid #2B3440", color: "#7D8A96", borderRadius: 6, padding: "4px 6px", fontSize: 10, cursor: "pointer" }}
             >
               Salir
             </button>
           )}
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 60px", alignItems: "center", gap: 4, padding: "8px 16px 10px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: COLS, alignItems: "center", padding: "8px 16px 10px" }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
           {onBack && (
             <button
               onClick={onBack}
@@ -57,9 +59,9 @@ export default function TopBar({ profile, title, onBack }) {
         <span style={{ fontWeight: 800, color: "#4A8FB8", fontSize: 14, textTransform: "uppercase", letterSpacing: "0.06em", textAlign: "center" }}>
           {title}
         </span>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
           {profile && (
-            <span style={{ fontSize: 11, color: "#7D8A96", fontFamily: "monospace" }}>{profile.code}</span>
+            <span style={{ fontSize: 10, color: "#7D8A96", fontFamily: "monospace" }}>{profile.code}</span>
           )}
         </div>
       </div>
