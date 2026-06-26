@@ -80,10 +80,13 @@ export default function NotificationBell({ userId }) {
     <div style={{ position: "relative" }}>
       <button
         onClick={() => setOpen((o) => !o)}
-        style={{ background: "none", border: "none", color: "#DCE3E8", cursor: "pointer", position: "relative", padding: 4 }}
+        style={{ background: "none", border: "none", cursor: "pointer", position: "relative", padding: 4, display: "flex" }}
         aria-label="Notificaciones"
       >
-        🔔
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={total > 0 ? "#4A8FB8" : "#7D8A96"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
         {total > 0 && (
           <span
             style={{
