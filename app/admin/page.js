@@ -10,9 +10,9 @@ import BottomNav from "../../components/BottomNav";
 const LANGS = [
   { code: "es", label: "Español" },
   { code: "en", label: "English" },
-  { code: "ja", label: "日本語" },
-  { code: "ko", label: "한국어" },
-  { code: "zh", label: "中文" },
+  { code: "ja", label: "JP 日本語" },
+  { code: "ko", label: "KR 한국어" },
+  { code: "zh", label: "CH 中文" },
 ];
 
 const inputStyle = {
