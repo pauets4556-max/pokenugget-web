@@ -62,10 +62,16 @@ export default function CollectionsPage() {
     );
   }
 
-  const visibleCollections = collections.map((c) => {
-    const itsItems = items.filter((i) => i.collection_id === c.id && i.sets?.lang === lang);
-    return { ...c, setCount: itsItems.length };
-  });
+  const visibleCollections = collections
+    .map((c) => {
+      const allItems = items.filter((i) => i.collection_id === c.id);
+      const itsItems = allItems.filter((i) => i.sets?.lang === lang);
+      return { ...c, setCount: itsItems.length, totalSets: allItems.length };
+    })
+    // Una colección vacía (sin ningún set todavía) se ve en todos los idiomas,
+    // para poder encontrarla y añadirle contenido. En cuanto ya tiene sets,
+    // solo se muestra en los idiomas donde realmente tiene algo.
+    .filter((c) => c.totalSets === 0 || c.setCount > 0);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
