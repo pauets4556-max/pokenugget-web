@@ -223,6 +223,35 @@ export default function SetDetailPage() {
                 Últimos 30 días · datos de ejemplo (sin conexión real a Cardmarket)
               </div>
             </div>
+
+            <div style={{ width: "100%" }}>
+              {(quantities[selectedCard.id] || 0) === 0 ? (
+                <button
+                  onClick={() => updateQuantity(selectedCard.id, 1)}
+                  style={{ width: "100%", background: "transparent", border: "1px solid #4F9B72", color: "#4F9B72", borderRadius: 8, padding: "9px 0", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                >
+                  + Añadir a mi colección
+                </button>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
+                  <button
+                    onClick={() => updateQuantity(selectedCard.id, (quantities[selectedCard.id] || 0) - 1)}
+                    style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid #2B3440", background: "transparent", color: "#B25450", cursor: "pointer", fontSize: 16 }}
+                  >
+                    −
+                  </button>
+                  <span style={{ minWidth: 20, textAlign: "center", color: "#4F9B72", fontWeight: 800, fontSize: 16 }}>
+                    {quantities[selectedCard.id] || 0}
+                  </span>
+                  <button
+                    onClick={() => updateQuantity(selectedCard.id, (quantities[selectedCard.id] || 0) + 1)}
+                    style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid #4F9B72", background: "transparent", color: "#4F9B72", cursor: "pointer", fontSize: 16 }}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
