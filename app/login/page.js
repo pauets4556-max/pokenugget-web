@@ -20,7 +20,7 @@ export default function LoginPage() {
     boxSizing: "border-box",
     background: "#141922",
     border: "1px solid #2B3440",
-    borderRadius: 8,
+    borderRadius: 6,
     padding: "10px 12px",
     color: "#DCE3E8",
     fontSize: 14,
@@ -115,16 +115,19 @@ export default function LoginPage() {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "0 20px",
+        padding: "0 28px 32px",
         background: "radial-gradient(circle at 50% 28%, #141922 0%, #0B0E13 70%)",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
-        <h1 style={{ textAlign: "center", color: "#4A8FB8", fontSize: 22, marginBottom: 6 }}>
-          Poké Nugget TCG
-        </h1>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img
+          src="/logo.png"
+          alt="Poké Nugget TCG"
+          style={{ width: "94%", maxWidth: 360, height: "auto", objectFit: "contain", filter: "drop-shadow(0 0 18px rgba(74,143,184,0.22))" }}
+        />
+      </div>
+
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
         <div
           style={{
             fontSize: 10.5,
@@ -132,6 +135,7 @@ export default function LoginPage() {
             fontFamily: "monospace",
             letterSpacing: "0.18em",
             textAlign: "center",
+            marginBottom: -2,
           }}
         >
           {mode === "login" ? "ACCESO AL SISTEMA" : "CREAR CUENTA NUEVA"}
