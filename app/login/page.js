@@ -8,7 +8,10 @@ import { generateUserCode } from "../../lib/generateCode";
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState("login"); // "login" | "register"
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("lastUsername") || "";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -56,6 +59,7 @@ export default function LoginPage() {
       setError("Usuario o contraseña incorrectos.");
       return;
     }
+    localStorage.setItem("lastUsername", username.trim());
     router.replace("/");
   };
 
@@ -105,6 +109,7 @@ export default function LoginPage() {
       setError("Cuenta creada, pero hubo un problema guardando el perfil: " + profileError.message);
       return;
     }
+    localStorage.setItem("lastUsername", username.trim());
     router.replace("/");
   };
 
@@ -122,15 +127,6 @@ export default function LoginPage() {
       }}
     >
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 4 }}>
-        <img
-          src="/logo.png"
-          alt="Poké Nugget TCG"
-          style={{ width: "94%", maxWidth: 360, height: "auto", objectFit: "contain", filter: "drop-shadow(0 0 18px rgba(74,143,184,0.22))" }}
-        />
-      </div>
-      }}
-    >
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <img
           src="/logo.png"
           alt="Poké Nugget TCG"
