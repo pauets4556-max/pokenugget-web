@@ -49,7 +49,7 @@ const cancelBtnStyle = {
 };
 
 const EMPTY_SET_FORM = { lang: "es", name: "", series: "", release_date: "", image_url: "" };
-const EMPTY_CARD_FORM = { lang: "es", set_id: "", name: "", number: "", rarity: "Común", image_url: "", description: "" };
+const EMPTY_CARD_FORM = { lang: "es", set_id: "", name: "", number: "", rarity: "Común", image_url: "", description: "", pokemon_tcg_id: "" };
 const EMPTY_COL_FORM = { lang: "es", name: "", description: "", image_url: "", setIds: [] };
 
 export default function AdminPage() {
@@ -195,6 +195,7 @@ export default function AdminPage() {
       rarity: cardForm.rarity,
       image_url: cardForm.image_url.trim() || null,
       description: cardForm.description.trim() || null,
+      pokemon_tcg_id: cardForm.pokemon_tcg_id.trim() || null,
     };
     if (editingCardId) {
       const { error } = await supabase.from("cards").update(fields).eq("id", editingCardId);
@@ -212,7 +213,7 @@ export default function AdminPage() {
       }
       flash("Carta añadida.");
     }
-    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "" });
+    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "", pokemon_tcg_id: "" });
     await loadAll();
   };
   const startEditCard = (c) => {
@@ -226,11 +227,12 @@ export default function AdminPage() {
       rarity: c.rarity || "Común",
       image_url: c.image_url || "",
       description: c.description || "",
+      pokemon_tcg_id: c.pokemon_tcg_id || "",
     });
   };
   const cancelEditCard = () => {
     setEditingCardId(null);
-    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "" });
+    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "", pokemon_tcg_id: "" });
   };
   const deleteCard = async (id) => {
     await supabase.from("cards").delete().eq("id", id);
@@ -438,6 +440,10 @@ export default function AdminPage() {
             <div>
               <label style={labelStyle}>Descripción</label>
               <textarea style={{ ...inputStyle, minHeight: 60 }} value={cardForm.description} onChange={(e) => setCardForm({ ...cardForm, description: e.target.value })} />
+            </div>
+            <div>
+              <label style={labelStyle}>ID de Pokémon TCG API (opcional, para precio real de Cardmarket)</label>
+              <input style={inputStyle} value={cardForm.pokemon_tcg_id} onChange={(e) => setCardForm({ ...cardForm, pokemon_tcg_id: e.target.value })} placeholder="p. ej. swsh1-1" />
             </div>
             <button style={btnStyle} disabled={!cardForm.set_id || uploading} onClick={submitCard}>
               {uploading ? "Subiendo imagen..." : editingCardId ? "Guardar cambios" : "+ Añadir carta"}
