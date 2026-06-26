@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TopBar from "../../../components/TopBar";
+import PriceChart from "../../../components/PriceChart";
+import { generatePriceHistory } from "../../../lib/priceHistory";
 
 export default function SetDetailPage() {
   const router = useRouter();
@@ -13,8 +15,9 @@ export default function SetDetailPage() {
   const [profile, setProfile] = useState(null);
   const [set, setSet] = useState(null);
   const [cards, setCards] = useState([]);
-  const [quantities, setQuantities] = useState({});
+  const [quantities, setQuantities] = useState({}); // { cardId: qty }
   const [userId, setUserId] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -77,8 +80,13 @@ export default function SetDetailPage() {
     );
   }
 
+  const priceHistory = selectedCard ? generatePriceHistory(selectedCard.id, selectedCard.rarity) : [];
+  const currentPrice = priceHistory[priceHistory.length - 1]?.price ?? 0;
+  const previousPrice = priceHistory[priceHistory.length - 2]?.price ?? currentPrice;
+  const priceUp = currentPrice >= previousPrice;
+
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
       <TopBar profile={profile} title={set?.name || "Set"} onBack={() => router.back()} />
 
       <div style={{ flex: 1, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -102,12 +110,16 @@ export default function SetDetailPage() {
                   padding: "10px 12px",
                 }}
               >
-                <div
+                <button
+                  onClick={() => setSelectedCard(c)}
                   style={{
                     width: 40,
                     height: 56,
                     flexShrink: 0,
                     borderRadius: 6,
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
                     background: c.image_url
                       ? `center / cover no-repeat url(${c.image_url})`
                       : "linear-gradient(160deg, #4A8FB8, #B25450)",
@@ -118,13 +130,16 @@ export default function SetDetailPage() {
                   }}
                 >
                   {!c.image_url && "🃏"}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                </button>
+                <button
+                  onClick={() => setSelectedCard(c)}
+                  style={{ flex: 1, minWidth: 0, background: "none", border: "none", textAlign: "left", cursor: "pointer", padding: 0 }}
+                >
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: "#DCE3E8" }}>{c.name}</div>
                   <div style={{ fontSize: 11, color: "#7D8A96" }}>
                     #{c.number} · {c.rarity}
                   </div>
-                </div>
+                </button>
                 {qty === 0 ? (
                   <button
                     onClick={() => updateQuantity(c.id, 1)}
@@ -163,6 +178,54 @@ export default function SetDetailPage() {
           })
         )}
       </div>
+
+      {selectedCard && (
+        <div
+          onClick={() => setSelectedCard(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(5,7,10,0.78)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 20 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#141922", border: "1px solid #2B3440", borderRadius: 16, padding: 18, width: "100%", maxWidth: 300, display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}
+          >
+            <button onClick={() => setSelectedCard(null)} style={{ alignSelf: "flex-end", background: "none", border: "none", color: "#7D8A96", cursor: "pointer", fontSize: 16 }}>✕</button>
+            <div
+              style={{
+                width: "60%",
+                aspectRatio: "63/88",
+                borderRadius: 10,
+                background: selectedCard.image_url
+                  ? `center / cover no-repeat url(${selectedCard.image_url})`
+                  : "linear-gradient(160deg, #4A8FB8, #B25450)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 40,
+              }}
+            >
+              {!selectedCard.image_url && "🃏"}
+            </div>
+            <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 16 }}>{selectedCard.name}</div>
+            <div style={{ fontSize: 11.5, color: "#7D8A96" }}>#{selectedCard.number} · {selectedCard.rarity}</div>
+            <div style={{ fontSize: 12.5, color: "#7D8A96", textAlign: "center" }}>
+              {selectedCard.description || "Esta carta todavía no tiene descripción."}
+            </div>
+
+            <div style={{ width: "100%", background: "#1A2029", border: "1px solid #2B3440", borderRadius: 10, padding: "10px 10px 4px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <span style={{ fontSize: 10, color: "#7D8A96", fontWeight: 700 }}>PRECIO CARDMARKET</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#DCE3E8" }}>
+                  {currentPrice.toFixed(2)} € {priceUp ? "▲" : "▼"}
+                </span>
+              </div>
+              <PriceChart history={priceHistory} />
+              <div style={{ fontSize: 9, color: "#7D8A96", textAlign: "center", marginTop: 2, marginBottom: 4 }}>
+                Últimos 30 días · datos de ejemplo (sin conexión real a Cardmarket)
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
