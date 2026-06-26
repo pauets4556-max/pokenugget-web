@@ -116,8 +116,18 @@ export default function LoginPage() {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
+        justifyContent: "center",
         padding: "0 28px 32px",
         background: "radial-gradient(circle at 50% 28%, #141922 0%, #0B0E13 70%)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 4 }}>
+        <img
+          src="/logo.png"
+          alt="Poké Nugget TCG"
+          style={{ width: "94%", maxWidth: 360, height: "auto", objectFit: "contain", filter: "drop-shadow(0 0 18px rgba(74,143,184,0.22))" }}
+        />
+      </div>
       }}
     >
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
