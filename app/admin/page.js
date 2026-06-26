@@ -281,8 +281,11 @@ export default function AdminPage() {
 
             <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 13, marginTop: 8 }}>Sets existentes</div>
             {sets.map((s) => (
-              <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#141922", border: "1px solid #2B3440", borderRadius: 8, padding: "8px 10px" }}>
-                <span style={{ fontSize: 13 }}>{s.name} <span style={{ color: "#7D8A96" }}>({s.lang})</span></span>
+              <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: "#141922", border: "1px solid #2B3440", borderRadius: 8, padding: "8px 10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {s.image_url && <img src={s.image_url} alt="" style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 6 }} />}
+                  <span style={{ fontSize: 13 }}>{s.name} <span style={{ color: "#7D8A96" }}>({s.lang})</span></span>
+                </div>
                 <button onClick={() => deleteSet(s.id)} style={{ background: "none", border: "none", color: "#B25450", cursor: "pointer", fontSize: 12 }}>Eliminar</button>
               </div>
             ))}
@@ -394,10 +397,13 @@ export default function AdminPage() {
 
             <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 13, marginTop: 8 }}>Colecciones existentes</div>
             {collections.map((c) => (
-              <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#141922", border: "1px solid #2B3440", borderRadius: 8, padding: "8px 10px" }}>
-                <span style={{ fontSize: 13 }}>
-                  {c.name} <span style={{ color: "#7D8A96" }}>({collectionItems.filter((i) => i.collection_id === c.id).length} sets)</span>
-                </span>
+              <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: "#141922", border: "1px solid #2B3440", borderRadius: 8, padding: "8px 10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {c.image_url && <img src={c.image_url} alt="" style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 6 }} />}
+                  <span style={{ fontSize: 13 }}>
+                    {c.name} <span style={{ color: "#7D8A96" }}>({collectionItems.filter((i) => i.collection_id === c.id).length} sets)</span>
+                  </span>
+                </div>
                 <button onClick={() => deleteCollection(c.id)} style={{ background: "none", border: "none", color: "#B25450", cursor: "pointer", fontSize: 12 }}>Eliminar</button>
               </div>
             ))}
