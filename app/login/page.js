@@ -21,10 +21,11 @@ export default function LoginPage() {
     background: "#141922",
     border: "1px solid #2B3440",
     borderRadius: 6,
-    padding: "10px 12px",
+    padding: "7px 10px",
     color: "#DCE3E8",
-    fontSize: 14,
+    fontSize: 12.5,
     outline: "none",
+    textAlign: "center",
   };
 
   const handleLogin = async () => {
@@ -127,7 +128,7 @@ export default function LoginPage() {
         />
       </div>
 
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ width: "100%", maxWidth: 220, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
         <div
           style={{
             fontSize: 10.5,
@@ -183,9 +184,9 @@ export default function LoginPage() {
             border: "1px solid #4A8FB8",
             color: "#4A8FB8",
             borderRadius: 6,
-            padding: "12px 0",
+            padding: "9px 0",
             fontWeight: 700,
-            fontSize: 13,
+            fontSize: 12,
             letterSpacing: "0.08em",
             cursor: loading ? "not-allowed" : "pointer",
             opacity: loading ? 0.6 : 1,
@@ -199,7 +200,7 @@ export default function LoginPage() {
             setMode(mode === "login" ? "register" : "login");
             setError("");
           }}
-          style={{ background: "none", border: "none", color: "#7D8A96", fontSize: 12, cursor: "pointer" }}
+          style={{ background: "none", border: "none", color: "#7D8A96", fontSize: 11, cursor: "pointer" }}
         >
           {mode === "login" ? "¿No tienes cuenta? Regístrate" : "¿Ya tienes cuenta? Inicia sesión"}
         </button>
