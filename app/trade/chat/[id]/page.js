@@ -89,9 +89,18 @@ export default function TradeChatPage() {
     if (!text.trim()) return;
     const messageText = text.trim();
     setText("");
-    await supabase.from("trade_messages").insert({ trade_id: params.id, sender_id: userId, text: messageText });
-    // No hace falta recargar: la suscripción de arriba añadirá el mensaje solo,
-    // tanto en tu pantalla como en la de tu amigo.
+    const { data: inserted, error } = await supabase
+      .from("trade_messages")
+      .insert({ trade_id: params.id, sender_id: userId, text: messageText })
+      .select()
+      .single();
+    if (error) {
+      alert("Error al enviar: " + error.message);
+      return;
+    }
+    // Lo añadimos nosotros mismos al instante; si la suscripción en tiempo real
+    // también lo recibe más tarde, el comprobador de duplicados de arriba lo ignora.
+    setMessages((prev) => (prev.some((m) => m.id === inserted.id) ? prev : [...prev, inserted]));
   };
 
   const updateStatus = async (status) => {
