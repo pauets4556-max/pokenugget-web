@@ -17,15 +17,6 @@ export default function TradeChatPage() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
 
-  const loadMessages = async () => {
-    const { data } = await supabase
-      .from("trade_messages")
-      .select("*")
-      .eq("trade_id", params.id)
-      .order("created_at");
-    setMessages(data || []);
-  };
-
   useEffect(() => {
     let active = true;
     (async () => {
@@ -45,13 +36,18 @@ export default function TradeChatPage() {
         .eq("id", params.id)
         .single();
 
-      await loadMessages();
+      const { data: messageData } = await supabase
+        .from("trade_messages")
+        .select("*")
+        .eq("trade_id", params.id)
+        .order("created_at");
 
       if (active) {
         setUserId(uid);
         setProfile(profileData);
         setTrade(tradeData);
         setOtherUsername(tradeData?.proposer_id === uid ? tradeData?.receiver?.username : tradeData?.proposer?.username);
+        setMessages(messageData || []);
         setLoading(false);
       }
     })();
@@ -60,11 +56,42 @@ export default function TradeChatPage() {
     };
   }, [router, params.id]);
 
+  // Tiempo real: escucha mensajes nuevos y cambios de estado del trade,
+  // sin que nadie tenga que recargar la página.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`trade-chat-${params.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "trade_messages", filter: `trade_id=eq.${params.id}` },
+        (payload) => {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === payload.new.id)) return prev;
+            return [...prev, payload.new];
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "trades", filter: `id=eq.${params.id}` },
+        (payload) => {
+          setTrade((prev) => ({ ...prev, status: payload.new.status }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [params.id]);
+
   const send = async () => {
     if (!text.trim()) return;
-    await supabase.from("trade_messages").insert({ trade_id: params.id, sender_id: userId, text: text.trim() });
+    const messageText = text.trim();
     setText("");
-    await loadMessages();
+    await supabase.from("trade_messages").insert({ trade_id: params.id, sender_id: userId, text: messageText });
+    // No hace falta recargar: la suscripción de arriba añadirá el mensaje solo,
+    // tanto en tu pantalla como en la de tu amigo.
   };
 
   const updateStatus = async (status) => {
