@@ -62,12 +62,10 @@ export default function CollectionsPage() {
     );
   }
 
-  const visibleCollections = collections
-    .map((c) => {
-      const itsItems = items.filter((i) => i.collection_id === c.id && i.sets?.lang === lang);
-      return { ...c, setCount: itsItems.length };
-    })
-    .filter((c) => c.setCount > 0);
+  const visibleCollections = collections.map((c) => {
+    const itsItems = items.filter((i) => i.collection_id === c.id && i.sets?.lang === lang);
+    return { ...c, setCount: itsItems.length };
+  });
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
