@@ -105,7 +105,9 @@ export default function CollectionsPage() {
               key={c.id}
               href={`/collections/${c.id}?lang=${lang}`}
               style={{
-                display: "block",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
                 background: "#141922",
                 border: "1px solid #2B3440",
                 borderRadius: 14,
@@ -113,12 +115,17 @@ export default function CollectionsPage() {
                 textDecoration: "none",
               }}
             >
+              {c.image_url && (
+                <img src={c.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 14.5 }}>{c.name}</div>
               {c.description && (
                 <div style={{ fontSize: 12, color: "#7D8A96", marginTop: 4 }}>{c.description}</div>
               )}
               <div style={{ fontSize: 11, color: "#4A8FB8", marginTop: 6, fontWeight: 700 }}>
                 {c.setCount} set{c.setCount !== 1 ? "s" : ""}
+              </div>
               </div>
             </Link>
           ))
