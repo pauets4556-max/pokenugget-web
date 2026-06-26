@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import TopBar from "../../components/TopBar";
+import { uploadImage } from "../../lib/uploadImage";
 import BottomNav from "../../components/BottomNav";
 
 const LANGS = [
@@ -43,6 +44,7 @@ export default function AdminPage() {
   const [profile, setProfile] = useState(null);
   const [section, setSection] = useState("sets"); // sets | cards | collections
   const [msg, setMsg] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const [sets, setSets] = useState([]);
   const [cards, setCards] = useState([]);
@@ -106,6 +108,20 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  const handleFileUpload = async (file, folder, onDone) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file, folder);
+      onDone(url);
+      flash("Imagen subida.");
+    } catch (err) {
+      flash("Error al subir la imagen: " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // ----- SETS -----
   const submitSet = async () => {
@@ -250,10 +266,18 @@ export default function AdminPage() {
               <input style={inputStyle} value={setForm.release_date} onChange={(e) => setSetForm({ ...setForm, release_date: e.target.value })} />
             </div>
             <div>
-              <label style={labelStyle}>URL de imagen (opcional)</label>
-              <input style={inputStyle} value={setForm.image_url} onChange={(e) => setSetForm({ ...setForm, image_url: e.target.value })} placeholder="https://..." />
+              <label style={labelStyle}>Imagen del set (opcional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e.target.files[0], "sets", (url) => setSetForm((p) => ({ ...p, image_url: url })))}
+                style={{ ...inputStyle, padding: "6px" }}
+              />
+              {setForm.image_url && (
+                <img src={setForm.image_url} alt="" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
+              )}
             </div>
-            <button style={btnStyle} onClick={submitSet}>+ Añadir set</button>
+            <button style={btnStyle} disabled={uploading} onClick={submitSet}>{uploading ? "Subiendo imagen..." : "+ Añadir set"}</button>
 
             <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 13, marginTop: 8 }}>Sets existentes</div>
             {sets.map((s) => (
@@ -295,14 +319,22 @@ export default function AdminPage() {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>URL de imagen (opcional)</label>
-              <input style={inputStyle} value={cardForm.image_url} onChange={(e) => setCardForm({ ...cardForm, image_url: e.target.value })} placeholder="https://..." />
+              <label style={labelStyle}>Imagen de la carta (opcional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e.target.files[0], "cards", (url) => setCardForm((p) => ({ ...p, image_url: url })))}
+                style={{ ...inputStyle, padding: "6px" }}
+              />
+              {cardForm.image_url && (
+                <img src={cardForm.image_url} alt="" style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
+              )}
             </div>
             <div>
               <label style={labelStyle}>Descripción</label>
               <textarea style={{ ...inputStyle, minHeight: 60 }} value={cardForm.description} onChange={(e) => setCardForm({ ...cardForm, description: e.target.value })} />
             </div>
-            <button style={btnStyle} disabled={!cardForm.set_id} onClick={submitCard}>+ Añadir carta</button>
+            <button style={btnStyle} disabled={!cardForm.set_id || uploading} onClick={submitCard}>{uploading ? "Subiendo imagen..." : "+ Añadir carta"}</button>
 
             {cardForm.set_id && (
               <>
@@ -335,8 +367,16 @@ export default function AdminPage() {
               <textarea style={{ ...inputStyle, minHeight: 60 }} value={colForm.description} onChange={(e) => setColForm({ ...colForm, description: e.target.value })} />
             </div>
             <div>
-              <label style={labelStyle}>URL de imagen (opcional)</label>
-              <input style={inputStyle} value={colForm.image_url} onChange={(e) => setColForm({ ...colForm, image_url: e.target.value })} placeholder="https://..." />
+              <label style={labelStyle}>Imagen de la colección (opcional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e.target.files[0], "collections", (url) => setColForm((p) => ({ ...p, image_url: url })))}
+                style={{ ...inputStyle, padding: "6px" }}
+              />
+              {colForm.image_url && (
+                <img src={colForm.image_url} alt="" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8, marginTop: 6 }} />
+              )}
             </div>
             <div>
               <label style={labelStyle}>Sets incluidos ({colForm.setIds.length} seleccionados)</label>
@@ -350,7 +390,7 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
-            <button style={btnStyle} disabled={!colForm.name.trim() || colForm.setIds.length === 0} onClick={submitCollection}>+ Añadir colección</button>
+            <button style={btnStyle} disabled={!colForm.name.trim() || colForm.setIds.length === 0 || uploading} onClick={submitCollection}>{uploading ? "Subiendo imagen..." : "+ Añadir colección"}</button>
 
             <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 13, marginTop: 8 }}>Colecciones existentes</div>
             {collections.map((c) => (
