@@ -55,6 +55,17 @@ export default function TradeChatPage() {
       active = false;
     };
   }, [router, params.id]);
+  
+  // Marca el último mensaje como "visto" en este dispositivo, para que
+  // la campanita de notificaciones no lo cuente como pendiente.
+  useEffect(() => {
+    if (messages.length === 0) return;
+    try {
+      const seen = JSON.parse(localStorage.getItem("seenTrades") || "{}");
+      seen[params.id] = messages[messages.length - 1].id;
+      localStorage.setItem("seenTrades", JSON.stringify(seen));
+    } catch {}
+  }, [messages, params.id]);
 
   // Tiempo real: escucha mensajes nuevos y cambios de estado del trade,
   // sin que nadie tenga que recargar la página.
