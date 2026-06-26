@@ -8,11 +8,11 @@ import TopBar from "../../components/TopBar";
 import BottomNav from "../../components/BottomNav";
 
 const LANGS = [
-  { code: "es", flag: "🇪🇸" },
-  { code: "en", flag: "🇬🇧" },
-  { code: "ja", flag: "🇯🇵" },
-  { code: "ko", flag: "🇰🇷" },
-  { code: "zh", flag: "🇨🇳" },
+  { code: "es", flag: "🇪🇸", label: "ES" },
+  { code: "en", flag: "🇬🇧", label: "EN" },
+  { code: "ja", flag: "🇯🇵", label: "JP" },
+  { code: "ko", flag: "🇰🇷", label: "KR" },
+  { code: "zh", flag: "🇨🇳", label: "CH" },
 ];
 
 export default function CollectionsPage() {
@@ -79,17 +79,22 @@ export default function CollectionsPage() {
             key={l.code}
             onClick={() => setLang(l.code)}
             style={{
-              background: "transparent",
-              border: lang === l.code ? "1px solid #4A8FB8" : "1px solid transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              background: lang === l.code ? "#1A2029" : "transparent",
+              border: lang === l.code ? "1px solid #4A8FB8" : "1px solid #2B3440",
               borderRadius: 6,
-              width: 30,
-              height: 30,
-              fontSize: 15,
+              padding: "5px 8px",
+              fontSize: 13,
               cursor: "pointer",
-              opacity: lang === l.code ? 1 : 0.5,
+              opacity: lang === l.code ? 1 : 0.6,
+              color: lang === l.code ? "#4A8FB8" : "#7D8A96",
+              fontWeight: 700,
             }}
           >
-            {l.flag}
+            <span>{l.flag}</span>
+            <span style={{ fontSize: 10.5 }}>{l.label}</span>
           </button>
         ))}
       </div>
