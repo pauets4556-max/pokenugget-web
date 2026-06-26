@@ -83,13 +83,14 @@ export default function MyCollectionPage() {
     return { total: relevantCards.length, ownedVariety, duplicates };
   };
 
-  const visibleCollections = collections.map((c) => {
-    const itsSetIds = items
-      .filter((i) => i.collection_id === c.id && i.sets?.lang === lang)
-      .map((i) => i.set_id);
-    const stats = computeStats(itsSetIds);
-    return { ...c, setCount: itsSetIds.length, ...stats };
-  });
+  const visibleCollections = collections
+    .map((c) => {
+      const allItems = items.filter((i) => i.collection_id === c.id);
+      const itsSetIds = allItems.filter((i) => i.sets?.lang === lang).map((i) => i.set_id);
+      const stats = computeStats(itsSetIds);
+      return { ...c, setCount: itsSetIds.length, totalSets: allItems.length, ...stats };
+    })
+    .filter((c) => c.totalSets === 0 || c.setCount > 0);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
