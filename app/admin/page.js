@@ -49,7 +49,7 @@ const cancelBtnStyle = {
 };
 
 const EMPTY_SET_FORM = { lang: "es", name: "", series: "", release_date: "", image_url: "" };
-const EMPTY_CARD_FORM = { lang: "es", set_id: "", name: "", number: "", rarity: "Común", image_url: "", description: "", pokemon_tcg_id: "" };
+const EMPTY_CARD_FORM = { lang: "es", set_id: "", name: "", number: "", rarity: "Común", image_url: "", description: "", pokemon_tcg_id: "", tcgdex_id: "" };
 const EMPTY_COL_FORM = { lang: "es", name: "", description: "", image_url: "", setIds: [] };
 
 export default function AdminPage() {
@@ -196,6 +196,7 @@ export default function AdminPage() {
       image_url: cardForm.image_url.trim() || null,
       description: cardForm.description.trim() || null,
       pokemon_tcg_id: cardForm.pokemon_tcg_id.trim() || null,
+      tcgdex_id: cardForm.tcgdex_id.trim() || null,
     };
     if (editingCardId) {
       const { error } = await supabase.from("cards").update(fields).eq("id", editingCardId);
@@ -213,7 +214,7 @@ export default function AdminPage() {
       }
       flash("Carta añadida.");
     }
-    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "", pokemon_tcg_id: "" });
+    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "", pokemon_tcg_id: "", tcgdex_id: "" });
     await loadAll();
   };
   const startEditCard = (c) => {
@@ -228,11 +229,12 @@ export default function AdminPage() {
       image_url: c.image_url || "",
       description: c.description || "",
       pokemon_tcg_id: c.pokemon_tcg_id || "",
+      tcgdex_id: c.tcgdex_id || "",
     });
   };
   const cancelEditCard = () => {
     setEditingCardId(null);
-    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "", pokemon_tcg_id: "" });
+    setCardForm({ ...cardForm, name: "", number: "", image_url: "", description: "", pokemon_tcg_id: "", tcgdex_id: "" });
   };
   const deleteCard = async (id) => {
     await supabase.from("cards").delete().eq("id", id);
@@ -263,7 +265,6 @@ export default function AdminPage() {
         flash("Error: " + error.message);
         return;
       }
-      // Reemplazamos sus sets: quitamos todos los anteriores y ponemos la selección actual.
       await supabase.from("collection_items").delete().eq("collection_id", editingCollectionId);
     } else {
       const { data: newCol, error } = await supabase.from("collections").insert(fields).select().single();
@@ -442,8 +443,12 @@ export default function AdminPage() {
               <textarea style={{ ...inputStyle, minHeight: 60 }} value={cardForm.description} onChange={(e) => setCardForm({ ...cardForm, description: e.target.value })} />
             </div>
             <div>
-              <label style={labelStyle}>ID de Pokémon TCG API (opcional, para precio real de Cardmarket)</label>
-              <input style={inputStyle} value={cardForm.pokemon_tcg_id} onChange={(e) => setCardForm({ ...cardForm, pokemon_tcg_id: e.target.value })} placeholder="p. ej. swsh1-1" />
+              <label style={labelStyle}>ID de Pokémon TCG API (opcional, para precio real — mejor cobertura en inglés)</label>
+              <input style={inputStyle} value={cardForm.pokemon_tcg_id} onChange={(e) => setCardForm({ ...cardForm, pokemon_tcg_id: e.target.value })} placeholder="p. ej. base1-44" />
+            </div>
+            <div>
+              <label style={labelStyle}>ID de TCGdex (opcional, mejor cobertura para japonés/coreano/chino)</label>
+              <input style={inputStyle} value={cardForm.tcgdex_id} onChange={(e) => setCardForm({ ...cardForm, tcgdex_id: e.target.value })} placeholder="p. ej. sv10_ja-1" />
             </div>
             <button style={btnStyle} disabled={!cardForm.set_id || uploading} onClick={submitCard}>
               {uploading ? "Subiendo imagen..." : editingCardId ? "Guardar cambios" : "+ Añadir carta"}
