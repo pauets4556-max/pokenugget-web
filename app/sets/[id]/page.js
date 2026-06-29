@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabaseClient";
 import TopBar from "../../../components/TopBar";
 import PriceChart from "../../../components/PriceChart";
 import { generatePriceHistory } from "../../../lib/priceHistory";
+import { supabase as sb } from "../../../lib/supabaseClient";
 
 export default function SetDetailPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function SetDetailPage() {
   const [quantities, setQuantities] = useState({}); // { cardId: qty }
   const [userId, setUserId] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [realPriceHistory, setRealPriceHistory] = useState(null); // null = no consultado todavía, [] = sin datos reales
 
   useEffect(() => {
     let active = true;
@@ -80,7 +82,28 @@ export default function SetDetailPage() {
     );
   }
 
-  const priceHistory = selectedCard ? generatePriceHistory(selectedCard.id, selectedCard.rarity) : [];
+  const openCard = async (card) => {
+    setSelectedCard(card);
+    setRealPriceHistory(null);
+    const { data } = await sb
+      .from("card_prices")
+      .select("price, recorded_at")
+      .eq("card_id", card.id)
+      .order("recorded_at", { ascending: true });
+    setRealPriceHistory(
+      (data || []).map((row) => ({
+        day: new Date(row.recorded_at).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" }),
+        price: row.price,
+      }))
+    );
+  };
+
+  const usingRealData = realPriceHistory !== null && realPriceHistory.length > 0;
+  const priceHistory = usingRealData
+    ? realPriceHistory
+    : selectedCard
+    ? generatePriceHistory(selectedCard.id, selectedCard.rarity)
+    : [];
   const currentPrice = priceHistory[priceHistory.length - 1]?.price ?? 0;
   const previousPrice = priceHistory[priceHistory.length - 2]?.price ?? currentPrice;
   const priceUp = currentPrice >= previousPrice;
@@ -111,7 +134,7 @@ export default function SetDetailPage() {
                 }}
               >
                 <button
-                  onClick={() => setSelectedCard(c)}
+                  onClick={() => openCard(c)}
                   style={{
                     width: 40,
                     height: 56,
@@ -132,7 +155,7 @@ export default function SetDetailPage() {
                   {!c.image_url && "🃏"}
                 </button>
                 <button
-                  onClick={() => setSelectedCard(c)}
+                  onClick={() => openCard(c)}
                   style={{ flex: 1, minWidth: 0, background: "none", border: "none", textAlign: "left", cursor: "pointer", padding: 0 }}
                 >
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: "#DCE3E8" }}>{c.name}</div>
@@ -220,7 +243,11 @@ export default function SetDetailPage() {
               </div>
               <PriceChart history={priceHistory} />
               <div style={{ fontSize: 9, color: "#7D8A96", textAlign: "center", marginTop: 2, marginBottom: 4 }}>
-                Últimos 30 días · datos de ejemplo (sin conexión real a Cardmarket)
+                {usingRealData
+                  ? "Precio real, actualizado a diario desde Cardmarket"
+                  : selectedCard?.pokemon_tcg_id
+                  ? "Todavía no hay histórico real guardado — datos de ejemplo por ahora"
+                  : "Esta carta no está enlazada a un precio real · datos de ejemplo"}
               </div>
             </div>
 
