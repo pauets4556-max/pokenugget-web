@@ -135,7 +135,9 @@ export default function MyCollectionPage() {
                 key={c.id}
                 href={`/my-collection/${c.id}?lang=${lang}`}
                 style={{
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
                   background: "#141922",
                   border: "1px solid #2B3440",
                   borderRadius: 14,
@@ -143,6 +145,10 @@ export default function MyCollectionPage() {
                   textDecoration: "none",
                 }}
               >
+                {c.image_url && (
+                  <img src={c.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 14.5 }}>{c.name}</div>
                 <div style={{ fontSize: 11, color: "#7D8A96", marginTop: 2 }}>
                   {c.setCount} set{c.setCount !== 1 ? "s" : ""}
@@ -157,6 +163,7 @@ export default function MyCollectionPage() {
                   {c.duplicates > 0 && (
                     <span style={{ fontSize: 11, color: "#4F9B72", fontWeight: 700 }}>+{c.duplicates} repetidas</span>
                   )}
+                </div>
                 </div>
               </Link>
             );
