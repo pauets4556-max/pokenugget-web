@@ -105,7 +105,9 @@ export default function MyCollectionDetailPage() {
                 key={s.id}
                 href={`/sets/${s.id}`}
                 style={{
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
                   background: "#141922",
                   border: "1px solid #2B3440",
                   borderRadius: 14,
@@ -113,6 +115,10 @@ export default function MyCollectionDetailPage() {
                   textDecoration: "none",
                 }}
               >
+                {s.image_url && (
+                  <img src={s.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 14.5 }}>{s.name}</div>
                 <div style={{ fontSize: 12, color: "#7D8A96", marginTop: 2 }}>
                   {s.series} {s.release_date ? `· ${s.release_date}` : ""}
@@ -127,6 +133,7 @@ export default function MyCollectionDetailPage() {
                   {s.duplicates > 0 && (
                     <span style={{ fontSize: 11, color: "#4F9B72", fontWeight: 700 }}>+{s.duplicates} repetidas</span>
                   )}
+                </div>
                 </div>
               </Link>
             );
