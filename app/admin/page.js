@@ -49,7 +49,7 @@ const cancelBtnStyle = {
 };
 
 const EMPTY_SET_FORM = { lang: "es", name: "", series: "", release_date: "", image_url: "" };
-const EMPTY_CARD_FORM = { lang: "es", set_id: "", name: "", number: "", rarity: "Común", image_url: "", description: "", pokemon_tcg_id: "", tcgdex_id: "" };
+const EMPTY_CARD_FORM = { lang: "es", set_id: "", name: "", number: "", rarity: "", image_url: "", description: "", pokemon_tcg_id: "", tcgdex_id: "" };
 const EMPTY_COL_FORM = { lang: "es", name: "", description: "", image_url: "", setIds: [] };
 
 export default function AdminPage() {
@@ -64,6 +64,12 @@ export default function AdminPage() {
   const [cards, setCards] = useState([]);
   const [collections, setCollections] = useState([]);
   const [collectionItems, setCollectionItems] = useState([]);
+  const [rarities, setRarities] = useState([]);
+  const [newRarityName, setNewRarityName] = useState("");
+  const [editingRarityId, setEditingRarityId] = useState(null);
+  const [editingRarityName, setEditingRarityName] = useState("");
+  const [expandedCol, setExpandedCol] = useState(null);
+  const [expandedSet, setExpandedSet] = useState(null);
 
   const [setForm, setSetForm] = useState(EMPTY_SET_FORM);
   const [cardForm, setCardForm] = useState(EMPTY_CARD_FORM);
@@ -83,10 +89,12 @@ export default function AdminPage() {
     const { data: cardsData } = await supabase.from("cards").select("*").order("number");
     const { data: colsData } = await supabase.from("collections").select("*").order("created_at");
     const { data: itemsData } = await supabase.from("collection_items").select("*");
+    const { data: raritiesData } = await supabase.from("rarities").select("*").order("created_at");
     setSets(setsData || []);
     setCards(cardsData || []);
     setCollections(colsData || []);
     setCollectionItems(itemsData || []);
+    setRarities(raritiesData || []);
   };
 
   useEffect(() => {
@@ -240,6 +248,43 @@ export default function AdminPage() {
     await supabase.from("cards").delete().eq("id", id);
     await loadAll();
     flash("Carta eliminada.");
+  };
+
+  // ----- RARITIES (por set) -----
+  const raritiesForSet = (setId) => rarities.filter((r) => r.set_id === setId);
+  const addRarity = async () => {
+    if (!newRarityName.trim() || !cardForm.set_id) return;
+    const { error } = await supabase.from("rarities").insert({ set_id: cardForm.set_id, name: newRarityName.trim() });
+    if (error) {
+      flash("Error: " + error.message);
+      return;
+    }
+    setNewRarityName("");
+    await loadAll();
+  };
+  const startEditRarity = (r) => {
+    setEditingRarityId(r.id);
+    setEditingRarityName(r.name);
+  };
+  const saveEditRarity = async () => {
+    const target = rarities.find((r) => r.id === editingRarityId);
+    if (!target || !editingRarityName.trim()) return;
+    const newName = editingRarityName.trim();
+    await supabase.from("rarities").update({ name: newName }).eq("id", target.id);
+    await supabase.from("cards").update({ rarity: newName }).eq("set_id", target.set_id).eq("rarity", target.name);
+    setEditingRarityId(null);
+    setEditingRarityName("");
+    await loadAll();
+    flash("Rareza actualizada.");
+  };
+  const cancelEditRarity = () => {
+    setEditingRarityId(null);
+    setEditingRarityName("");
+  };
+  const deleteRarity = async (id) => {
+    await supabase.from("rarities").delete().eq("id", id);
+    await loadAll();
+    flash("Rareza eliminada.");
   };
 
   // ----- COLLECTIONS -----
@@ -407,7 +452,7 @@ export default function AdminPage() {
             </div>
             <div>
               <label style={labelStyle}>Set</label>
-              <select disabled={!!editingCardId} style={{ ...inputStyle, opacity: editingCardId ? 0.6 : 1 }} value={cardForm.set_id} onChange={(e) => setCardForm({ ...cardForm, set_id: e.target.value })}>
+              <select disabled={!!editingCardId} style={{ ...inputStyle, opacity: editingCardId ? 0.6 : 1 }} value={cardForm.set_id} onChange={(e) => setCardForm({ ...cardForm, set_id: e.target.value, rarity: "" })}>
                 <option value="">Selecciona un set...</option>
                 {setsForCardLang.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -422,9 +467,47 @@ export default function AdminPage() {
             </div>
             <div>
               <label style={labelStyle}>Rareza</label>
-              <select style={inputStyle} value={cardForm.rarity} onChange={(e) => setCardForm({ ...cardForm, rarity: e.target.value })}>
-                {["Común", "Infrecuente", "Rara", "Rara Holo", "Ultra Rara", "Secreta"].map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              {!cardForm.set_id ? (
+                <div style={{ fontSize: 12, color: "#7D8A96" }}>Elige primero un set para ver/gestionar sus rarezas.</div>
+              ) : (
+                <>
+                  <select style={inputStyle} value={cardForm.rarity} onChange={(e) => setCardForm({ ...cardForm, rarity: e.target.value })}>
+                    <option value="">Selecciona una rareza...</option>
+                    {raritiesForSet(cardForm.set_id).map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                  </select>
+
+                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {raritiesForSet(cardForm.set_id).map((r) => (
+                      <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 6, background: "#141922", border: "1px solid #2B3440", borderRadius: 6, padding: "5px 8px" }}>
+                        {editingRarityId === r.id ? (
+                          <>
+                            <input style={{ ...inputStyle, padding: "5px 8px", fontSize: 12 }} value={editingRarityName} onChange={(e) => setEditingRarityName(e.target.value)} />
+                            <button onClick={saveEditRarity} style={{ background: "none", border: "none", color: "#4F9B72", cursor: "pointer", fontSize: 12 }}>Guardar</button>
+                            <button onClick={cancelEditRarity} style={{ background: "none", border: "none", color: "#7D8A96", cursor: "pointer", fontSize: 12 }}>Cancelar</button>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ flex: 1, fontSize: 12.5 }}>{r.name}</span>
+                            <button onClick={() => startEditRarity(r)} style={{ background: "none", border: "none", color: "#4A8FB8", cursor: "pointer", fontSize: 11.5 }}>Editar</button>
+                            <button onClick={() => deleteRarity(r.id)} style={{ background: "none", border: "none", color: "#B25450", cursor: "pointer", fontSize: 11.5 }}>Eliminar</button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        style={{ ...inputStyle, fontSize: 12.5 }}
+                        value={newRarityName}
+                        onChange={(e) => setNewRarityName(e.target.value)}
+                        placeholder="Nueva rareza para este set..."
+                      />
+                      <button onClick={addRarity} style={{ background: "#10141B", color: "white", border: "1px solid #2B3440", borderRadius: 6, padding: "0 12px", fontSize: 12, cursor: "pointer" }}>
+                        + Añadir
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <div>
               <label style={labelStyle}>Imagen de la carta (opcional)</label>
@@ -450,33 +533,98 @@ export default function AdminPage() {
               <label style={labelStyle}>ID de TCGdex (opcional, mejor cobertura para japonés/coreano/chino)</label>
               <input style={inputStyle} value={cardForm.tcgdex_id} onChange={(e) => setCardForm({ ...cardForm, tcgdex_id: e.target.value })} placeholder="p. ej. sv10_ja-1" />
             </div>
-            <button style={btnStyle} disabled={!cardForm.set_id || uploading} onClick={submitCard}>
+            <button style={btnStyle} disabled={!cardForm.set_id || !cardForm.rarity || uploading} onClick={submitCard}>
               {uploading ? "Subiendo imagen..." : editingCardId ? "Guardar cambios" : "+ Añadir carta"}
             </button>
             {editingCardId && <button style={cancelBtnStyle} onClick={cancelEditCard}>Cancelar edición</button>}
 
-            <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 13, marginTop: 8 }}>Todas las cartas</div>
-            {sets.map((s) => {
-              const setCards = cards.filter((c) => c.set_id === s.id);
-              if (setCards.length === 0) return null;
-              return (
-                <div key={s.id}>
-                  <div style={{ fontSize: 11, color: "#7D8A96", fontWeight: 700, margin: "6px 0 4px" }}>{s.name} ({s.lang})</div>
-                  {setCards.map((c) => (
-                    <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: "#141922", border: "1px solid #2B3440", borderRadius: 8, padding: "8px 10px", marginBottom: 4 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        {c.image_url && <img src={c.image_url} alt="" style={{ width: 28, height: 39, objectFit: "cover", borderRadius: 4 }} />}
-                        <span style={{ fontSize: 13 }}>{c.name}</span>
-                      </div>
-                      <div style={{ display: "flex", gap: 10 }}>
-                        <button onClick={() => startEditCard(c)} style={{ background: "none", border: "none", color: "#4A8FB8", cursor: "pointer", fontSize: 12 }}>Editar</button>
-                        <button onClick={() => deleteCard(c.id)} style={{ background: "none", border: "none", color: "#B25450", cursor: "pointer", fontSize: 12 }}>Eliminar</button>
-                      </div>
-                    </div>
-                  ))}
+            <div style={{ fontWeight: 800, color: "#DCE3E8", fontSize: 13, marginTop: 12 }}>Explorar cartas por colección</div>
+            <div style={{ fontSize: 11, color: "#7D8A96", marginBottom: 4 }}>(usa el mismo idioma de arriba para filtrar)</div>
+
+            {(() => {
+              const setsInLang = sets.filter((s) => s.lang === cardForm.lang);
+              const collectionsInLang = collections
+                .map((c) => {
+                  const allItems = collectionItems.filter((i) => i.collection_id === c.id);
+                  const itemsInLang = allItems.filter((i) => setsInLang.some((s) => s.id === i.set_id));
+                  return { ...c, setIds: itemsInLang.map((i) => i.set_id), totalSets: allItems.length };
+                })
+                .filter((c) => c.totalSets === 0 || c.setIds.length > 0);
+
+              const setIdsInCollections = new Set(collectionsInLang.flatMap((c) => c.setIds));
+              const orphanSets = setsInLang.filter((s) => !setIdsInCollections.has(s.id));
+
+              const renderCardRow = (c) => (
+                <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: "#141922", border: "1px solid #2B3440", borderRadius: 8, padding: "8px 10px", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {c.image_url && <img src={c.image_url} alt="" style={{ width: 28, height: 39, objectFit: "cover", borderRadius: 4 }} />}
+                    <span style={{ fontSize: 13 }}>{c.name}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={() => startEditCard(c)} style={{ background: "none", border: "none", color: "#4A8FB8", cursor: "pointer", fontSize: 12 }}>Editar</button>
+                    <button onClick={() => deleteCard(c.id)} style={{ background: "none", border: "none", color: "#B25450", cursor: "pointer", fontSize: 12 }}>Eliminar</button>
+                  </div>
                 </div>
               );
-            })}
+
+              const renderSetRow = (s) => (
+                <div key={s.id}>
+                  <button
+                    onClick={() => setExpandedSet(expandedSet === s.id ? null : s.id)}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "#1A2029", border: "1px solid #2B3440", borderRadius: 8, padding: "8px 10px", marginBottom: 4, cursor: "pointer", color: "#DCE3E8" }}
+                  >
+                    <span style={{ fontSize: 12.5, fontWeight: 700 }}>📦 {s.name}</span>
+                    <span style={{ fontSize: 11, color: "#7D8A96" }}>{cards.filter((c) => c.set_id === s.id).length} cartas {expandedSet === s.id ? "▲" : "▼"}</span>
+                  </button>
+                  {expandedSet === s.id && (
+                    <div style={{ paddingLeft: 10, marginBottom: 6 }}>
+                      {cards.filter((c) => c.set_id === s.id).map(renderCardRow)}
+                      {cards.filter((c) => c.set_id === s.id).length === 0 && (
+                        <div style={{ fontSize: 11.5, color: "#7D8A96", padding: "4px 0" }}>Este set no tiene cartas todavía.</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+
+              return (
+                <>
+                  {collectionsInLang.map((col) => (
+                    <div key={col.id}>
+                      <button
+                        onClick={() => setExpandedCol(expandedCol === col.id ? null : col.id)}
+                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "#141922", border: "1px solid #2B3440", borderRadius: 8, padding: "9px 10px", marginBottom: 4, cursor: "pointer", color: "#DCE3E8" }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 800 }}>🗂️ {col.name}</span>
+                        <span style={{ fontSize: 11, color: "#7D8A96" }}>{col.setIds.length} sets {expandedCol === col.id ? "▲" : "▼"}</span>
+                      </button>
+                      {expandedCol === col.id && (
+                        <div style={{ paddingLeft: 10, marginBottom: 6 }}>
+                          {col.setIds.length === 0 ? (
+                            <div style={{ fontSize: 11.5, color: "#7D8A96", padding: "4px 0" }}>Esta colección no tiene sets en este idioma.</div>
+                          ) : (
+                            setsInLang.filter((s) => col.setIds.includes(s.id)).map(renderSetRow)
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {orphanSets.length > 0 && (
+                    <>
+                      <div style={{ fontSize: 11, color: "#7D8A96", fontWeight: 700, margin: "8px 0 4px" }}>Sets sin colección</div>
+                      {orphanSets.map(renderSetRow)}
+                    </>
+                  )}
+
+                  {collectionsInLang.length === 0 && orphanSets.length === 0 && (
+                    <div style={{ fontSize: 12.5, color: "#7D8A96", textAlign: "center", marginTop: 10 }}>
+                      No hay nada en este idioma todavía.
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </>
         )}
 
